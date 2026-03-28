@@ -1,0 +1,12 @@
+http:
+  addr: ":8080"
+auth:
+  api_key: "apitest"
+catalog:
+  backend: memory
+  memory:
+    products_path: "data/products.json"
+  supabase:
+    dsn_env: "DATABASE_URL"
+promo:
+  data_dir: "data"

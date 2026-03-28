@@ -1,0 +1,19 @@
+# Copy to config.yaml and adjust. Secrets via env: API_KEY, DATABASE_URL, COUPON_DATA_DIR, CONFIG_PATH.
+
+http:
+  addr: ":8080"
+
+auth:
+  api_key: "apitest"
+
+catalog:
+  # memory | supabase
+  backend: memory
+  memory:
+    products_path: "data/products.json"
+  supabase:
+    dsn_env: "DATABASE_URL"
+
+promo:
+  # Directory containing couponbase1.gz, couponbase2.gz, couponbase3.gz
+  data_dir: "data"
