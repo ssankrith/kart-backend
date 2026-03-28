@@ -1,0 +1,13 @@
+{
+  "note": "Captured from https://orderfoodonline.deno.dev/api — use for compatibility tests",
+  "list_product_path": "/api/product",
+  "get_product_200_sample_id": "1",
+  "post_order_requires_api_key_in_spec": true,
+  "demo_allows_order_without_api_key": true,
+  "order_shape": {
+    "items": [{"productId": "1", "quantity": 2}],
+    "couponCode": "optional string",
+    "id": "uuid string",
+    "products": ["array of full Product including image"]
+  }
+}
