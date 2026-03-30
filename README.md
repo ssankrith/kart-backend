@@ -2,6 +2,10 @@
 
 Go implementation of the [Oolio advanced backend challenge](https://github.com/oolio-group/kart-challenge/blob/advanced-challenge/backend-challenge/README.md): food-ordering API per [OpenAPI 3.1](https://orderfoodonline.deno.dev/public/openapi.yaml), with **Gin**, **in-memory** product catalog (`data/products.json`), and **promo validation** using **precomputed shard files** (`000.bin`…`255.bin` under `PROMO_SHARDS_DIR`), built offline by `cmd/preprocessor_seq`.
 
+## Hosted deployment
+
+The API is deployed on [Render](https://render.com) at **https://kart-backend-18if.onrender.com**. The service is set to **redeploy automatically when changes are pushed to the `main` branch**.
+
 ## Features
 
 - `GET /product` or `GET /api/product` — list products (same as [demo](https://orderfoodonline.deno.dev/api) `/api` prefix)  

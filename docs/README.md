@@ -2,6 +2,10 @@
 
 This folder supplements the root [README](../README.md) with deeper material for reviewers.
 
+## Hosted deployment
+
+The API is deployed on [Render](https://render.com) at **https://kart-backend-18if.onrender.com**. The service is set to **redeploy automatically when changes are pushed to the `main` branch**.
+
 ## Shipped artifacts vs rebuilding the preprocessor
 
 The repository **includes the preprocessed promo shard files** under **`shards_seq/`** (`000.bin` … `255.bin`). That is enough for **`go run ./cmd/server`**, tests, and the **Docker** image: you do **not** need to download the raw coupon gzips or run the offline pipeline just to run the API.
