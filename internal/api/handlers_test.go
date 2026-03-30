@@ -19,10 +19,15 @@ import (
 func TestPlaceOrder_Unauthorized(t *testing.T) {
 	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Category: "c", Price: 1}})
 	dir := couponDir(t)
-	pc, err := promo.LoadFromGZIPFiles(promo.DirPaths(dir))
+	shardsDir := filepath.Join(dir, "shards_seq")
+	if err := promo.BuildShardsFromGzipDir(dir, shardsDir); err != nil {
+		t.Fatal(err)
+	}
+	pc, err := promo.LoadShardsPromo(shardsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer pc.Close()
 	h := &Handlers{Catalog: cat, Order: &order.Service{Catalog: cat, Promo: pc}}
 	r := NewRouter(h, "secret")
 
@@ -39,10 +44,15 @@ func TestPlaceOrder_Unauthorized(t *testing.T) {
 func TestPlaceOrder_OK(t *testing.T) {
 	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Category: "c", Price: 1}})
 	dir := couponDir(t)
-	pc, err := promo.LoadFromGZIPFiles(promo.DirPaths(dir))
+	shardsDir := filepath.Join(dir, "shards_seq")
+	if err := promo.BuildShardsFromGzipDir(dir, shardsDir); err != nil {
+		t.Fatal(err)
+	}
+	pc, err := promo.LoadShardsPromo(shardsDir)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer pc.Close()
 	h := &Handlers{Catalog: cat, Order: &order.Service{Catalog: cat, Promo: pc}}
 	r := NewRouter(h, "apitest")
 
@@ -67,9 +77,9 @@ func TestPlaceOrder_OK(t *testing.T) {
 func couponDir(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	writeGZF(t, filepath.Join(dir, "couponbase1.gz"), "xx HAPPYHRS yy")
-	writeGZF(t, filepath.Join(dir, "couponbase2.gz"), "HAPPYHRS")
-	writeGZF(t, filepath.Join(dir, "couponbase3.gz"), "nope")
+	writeGZF(t, filepath.Join(dir, "couponbase1.gz"), "HAPPYHRS\n")
+	writeGZF(t, filepath.Join(dir, "couponbase2.gz"), "XHAPPYHRS\n")
+	writeGZF(t, filepath.Join(dir, "couponbase3.gz"), "ABHAPPYHRS\n")
 	return dir
 }
 

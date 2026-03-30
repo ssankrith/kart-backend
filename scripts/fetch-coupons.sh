@@ -7,4 +7,4 @@ for i in 1 2 3; do
   echo "Downloading couponbase${i}.gz ..."
   curl -fsSL -o "$DIR/couponbase${i}.gz" "$base/couponbase${i}.gz"
 done
-echo "Done. Set promo.data_dir or COUPON_DATA_DIR to $DIR"
+echo "Done. Use COUPON_DATA_DIR=$DIR (or copy gzips into data/)"

@@ -15,6 +15,8 @@ type fakePromo struct {
 
 func (f fakePromo) Valid(string) bool { return f.ok }
 
+func (fakePromo) Close() error { return nil }
+
 func TestPlace_InvalidProduct(t *testing.T) {
 	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Price: 1, Category: "c"}})
 	s := &Service{Catalog: cat, Promo: fakePromo{ok: true}}
