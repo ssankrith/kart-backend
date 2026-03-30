@@ -16,6 +16,7 @@ func NewRouter(h *Handlers, apiKey string) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(gin.Logger())
+	r.Use(CORSMiddleware())
 
 	register := func(r gin.IRoutes) {
 		r.GET("/health", h.Health)

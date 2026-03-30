@@ -50,6 +50,7 @@ Values can be set in the process environment or in a **`.env`** file in the work
 | `PRODUCTS_PATH` | `data/products.json` | Product catalog JSON |
 | `COUPON_DATA_DIR` | `data` | Directory with `couponbase1.gz` … `3` |
 | `PROMO_SHARDS_DIR` | (optional) | If set, preferred directory for `000.bin` … `255.bin`. Else `./shards_seq`, else `<COUPON_DATA_DIR>/shards_seq`. |
+| `CORS_ORIGINS` | (empty) | Comma-separated `Origin` values allowed for browser clients (e.g. `https://your-app.vercel.app,http://localhost:3000`). Set `*` to allow any origin (dev only). Required for **cross-origin** `GET /product` from a web app. |
 
 **Promo startup time (order of magnitude):** The server mmap-loads shard files. Startup is typically **seconds** (and shards are loaded lazily on first use).
 
