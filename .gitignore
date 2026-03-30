@@ -2,6 +2,9 @@
 /dist/
 *.exe
 .env
-config.local.yaml
 .DS_Store
 coverage.out
+/shards_seq/tmp/
+
+# Large challenge corpora — use scripts/setup-promo-shards.sh or scripts/fetch-coupons.sh
+data/couponbase*.gz

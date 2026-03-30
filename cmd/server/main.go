@@ -6,64 +6,62 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/joho/godotenv"
 	"github.com/ssankrith/kart-backend/internal/api"
 	"github.com/ssankrith/kart-backend/internal/catalog/memory"
-	catalogpg "github.com/ssankrith/kart-backend/internal/catalog/supabase"
-	"github.com/ssankrith/kart-backend/internal/config"
-	"github.com/ssankrith/kart-backend/internal/domain"
 	"github.com/ssankrith/kart-backend/internal/order"
 	"github.com/ssankrith/kart-backend/internal/promo"
 )
 
+// loadEnvOnce loads a `.env` file from the working directory into the process
+// environment (if present). Existing OS env vars are not overridden.
+var loadEnvOnce sync.Once
+
+func getenv(key, def string) string {
+	loadEnvOnce.Do(func() {
+		if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+			log.Printf("godotenv: %v", err)
+		}
+	})
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
 func main() {
-	cfgPath := os.Getenv("CONFIG_PATH")
-	if cfgPath == "" {
-		cfgPath = "config.yaml"
-	}
-	cfg, err := config.Load(cfgPath)
+	addr := getenv("HTTP_ADDR", ":8080")
+	apiKey := getenv("API_KEY", "apitest")
+	productsPath := getenv("PRODUCTS_PATH", "data/products.json")
+	couponDataDir := getenv("COUPON_DATA_DIR", "data")
+
+	cat, err := memory.LoadFromFile(productsPath)
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		log.Fatalf("products: %v", err)
 	}
 
-	var cat domain.Catalog
-	switch cfg.Catalog.Backend {
-	case "memory":
-		mem, err := memory.LoadFromFile(cfg.Catalog.Memory.ProductsPath)
-		if err != nil {
-			log.Fatalf("memory catalog: %v", err)
-		}
-		cat = mem
-	case "supabase":
-		dsn, err := cfg.DSN()
-		if err != nil {
-			log.Fatalf("supabase dsn: %v", err)
-		}
-		pool, err := pgxpool.New(context.Background(), dsn)
-		if err != nil {
-			log.Fatalf("pgx pool: %v", err)
-		}
-		defer pool.Close()
-		cat = catalogpg.New(pool)
-	default:
-		log.Fatalf("unknown catalog backend %q", cfg.Catalog.Backend)
-	}
-
-	pc, err := promo.LoadFromGZIPFiles(promo.DirPaths(cfg.Promo.DataDir))
+	promoStart := time.Now()
+	mc, err := promo.LoadPromo(couponDataDir)
+	promoEnd := time.Now()
 	if err != nil {
-		log.Fatalf("promo corpora: %v", err)
+		log.Fatalf("promo corpus load: %v", err)
 	}
-
-	svc := &order.Service{Catalog: cat, Promo: pc}
+	log.Printf("promo corpus loaded from %q: start %s, end %s, elapsed %s",
+		couponDataDir,
+		promoStart.Format(time.RFC3339Nano),
+		promoEnd.Format(time.RFC3339Nano),
+		promoEnd.Sub(promoStart))
+	defer mc.Close()
+	svc := &order.Service{Catalog: cat, Promo: mc}
 	h := &api.Handlers{Catalog: cat, Order: svc}
-	router := api.NewRouter(h, cfg.Auth.APIKey)
+	router := api.NewRouter(h, apiKey)
 
 	srv := &http.Server{
-		Addr:              cfg.HTTP.Addr,
+		Addr:              addr,
 		Handler:           router,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
@@ -71,7 +69,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("listening on %s (catalog=%s)", cfg.HTTP.Addr, cfg.Catalog.Backend)
+		log.Printf("listening on %s", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("listen: %v", err)
 		}

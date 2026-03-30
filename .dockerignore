@@ -1,3 +1,5 @@
+# Smaller, faster `docker build` context — see Dockerfile runtime stage (only binary + products + shard *.bin).
+
 .git
 .github
 *.md
@@ -6,3 +8,15 @@ fixtures
 coverage.out
 .idea
 .vscode
+bin/
+dist/
+
+# Challenge corpora (hundreds of MB each) — not needed in the image; promo comes from precomputed shards.
+data/couponbase*.gz
+
+# Preprocessor scratch — can be huge; never copy into an image.
+shards_seq/tmp/
+
+# index experiments
+data/promo_*
+**/.DS_Store
