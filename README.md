@@ -12,6 +12,8 @@ The API is deployed on [Render](https://render.com) at **https://kart-backend-18
 - `GET /product/{productId}` — product by id (400 invalid id, 404 missing)  
 - `POST /order` or `POST /api/order` — place order (requires `api_key` header; validates optional `couponCode` against Oolio rules)  
 - `GET /health` — liveness  
+- `GET /ready` — readiness (catalog + promo loaded)  
+- `GET /metrics` — Prometheus metrics when `METRICS_ADDR` is set (separate listener; not on the main HTTP port)  
 
 **Promo rules:** UTF-8 length 8–10 inclusive; code must appear as a substring in **at least two** of the three corpora (`couponbase1.gz` … `couponbase3.gz` under `COUPON_DATA_DIR`, default `data/`). **Offline**, the preprocessor scans the gzips and emits only codes that satisfy the rule into shard files; **at runtime** the server looks up the candidate in the correct shard.
 
@@ -50,6 +52,11 @@ Values can be set in the process environment or in a **`.env`** file in the work
 | `PRODUCTS_PATH` | `data/products.json` | Product catalog JSON |
 | `COUPON_DATA_DIR` | `data` | Directory with `couponbase1.gz` … `3` |
 | `PROMO_SHARDS_DIR` | (optional) | If set, preferred directory for `000.bin` … `255.bin`. Else `./shards_seq`, else `<COUPON_DATA_DIR>/shards_seq`. |
+| `PROMO_SHARDS_STRICT` | (empty) | If `1`, require `manifest.json` next to shards and fail startup if checksums/sizes do not match. |
+| `METRICS_ADDR` | (empty) | If set (e.g. `:9091`), serve Prometheus `/metrics` on this address only (keep off the public API port). |
+| `ORDER_RATE_RPS` | `100` | Token-bucket rate for `POST /order` (set `0` or negative to disable). |
+| `ORDER_RATE_BURST` | `200` | Burst size for order rate limiting. |
+| `MAX_BODY_BYTES` | `65536` | Max JSON body size for `POST /order`. |
 | `CORS_ORIGINS` | (empty) | Comma-separated `Origin` values allowed for browser clients (e.g. `https://your-app.vercel.app,http://localhost:3000`). Set `*` to allow any origin (dev only). Required for **cross-origin** `GET /product` from a web app. |
 
 **Promo startup time (order of magnitude):** The server mmap-loads shard files. Startup is typically **seconds** (and shards are loaded lazily on first use).

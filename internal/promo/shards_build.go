@@ -67,6 +67,6 @@ func BuildShardsFromGzipDir(dataDir, outDir string) error {
 		}
 	}
 
-	return nil
+	return WriteShardManifestFromDir(outDir)
 }
 

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ssankrith/kart-backend/internal/domain"
 )
@@ -27,10 +28,35 @@ func LoadPromo(couponDataDir string) (domain.PromoChecker, error) {
 		}
 		if HasShardsIndex(dir) {
 			log.Printf("promo: loading shards index from %s", dir)
+			if err := maybeValidateManifest(dir); err != nil {
+				return nil, err
+			}
 			return LoadShardsPromo(dir)
 		}
 	}
 	return nil, fmt.Errorf("promo: no shards index found (tried: %v). Generate shards with cmd/preprocessor_seq and set PROMO_SHARDS_DIR", candidates)
+}
+
+func maybeValidateManifest(dir string) error {
+	strict := strings.TrimSpace(os.Getenv("PROMO_SHARDS_STRICT")) == "1"
+	m, err := ReadManifest(dir)
+	if err != nil {
+		return fmt.Errorf("promo manifest: %w", err)
+	}
+	if m == nil {
+		if strict {
+			return fmt.Errorf("promo: %s missing under %s (set PROMO_SHARDS_STRICT=0 to allow)", ManifestFileName, dir)
+		}
+		log.Printf("promo: %s not found under %s (skipping integrity check)", ManifestFileName, dir)
+		return nil
+	}
+	if err := ValidateManifest(dir, m); err != nil {
+		if strict {
+			return fmt.Errorf("promo manifest validation: %w", err)
+		}
+		log.Printf("promo: manifest validation warning: %v", err)
+	}
+	return nil
 }
 
 // HasShardsIndex checks whether a shards directory looks usable.

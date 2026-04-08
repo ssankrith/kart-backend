@@ -21,6 +21,8 @@ Run the preprocessor **only if** you want to **verify**, **reproduce**, or **reg
 | [ARCHITECTURE.md](ARCHITECTURE.md) | HTTP API → services → promo checker; one diagram of the running service. |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Environment variables, building shards, shipping artifacts, Docker notes, rollback. |
 | [REALTIME_AND_SCALE.md](REALTIME_AND_SCALE.md) | How this behaves as a live service: latency, memory, cold cache, scaling levers. |
+| [BENCHMARKS.md](BENCHMARKS.md) | Go benchmarks and optional HTTP load (`hey`) methodology. |
 | [ALTERNATIVES.md](ALTERNATIVES.md) | Other ways to solve the same problem (heap map, CBIX-style index, SQLite, etc.) and tradeoffs. |
+| [adr/001-offline-sharded-index.md](adr/001-offline-sharded-index.md) | ADR: why offline shards + mmap + binary search. |
 
 **Suggested reading order:** CORPUS_DATA → PROMO_DESIGN → ARCHITECTURE → DEPLOYMENT → REALTIME_AND_SCALE → ALTERNATIVES.

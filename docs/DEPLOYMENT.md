@@ -16,8 +16,14 @@
 | `PRODUCTS_PATH` | `./data/products.json` | Path to product JSON array |
 | `COUPON_DATA_DIR` | `./data` | Directory containing `couponbase*.gz` (used for paths/logging; shards are separate) |
 | `PROMO_SHARDS_DIR` | `./shards_seq` | Directory with `000.bin` … `255.bin` |
+| `PROMO_SHARDS_STRICT` | unset | Set `1` to require `manifest.json` and fail if shard files do not match recorded sizes/checksums. |
+| `METRICS_ADDR` | unset | e.g. `:9091` — Prometheus `/metrics` on a **separate** listener (recommended for public hosts). |
+| `ORDER_RATE_RPS` / `ORDER_RATE_BURST` | `100` / `200` | Rate limit on `POST /order`; use `ORDER_RATE_RPS=0` to disable. |
+| `MAX_BODY_BYTES` | `65536` | Upper bound on JSON body size for orders. |
 
 The server loads promo via `promo.LoadPromo`, which resolves shards from `PROMO_SHARDS_DIR`, then `./shards_seq`, then `<COUPON_DATA_DIR>/shards_seq`.
+
+After building shards, `manifest.json` is emitted by `cmd/preprocessor_seq` (or regenerate with `go run ./cmd/genmanifest -dir ./shards_seq`). For production rollouts, point `PROMO_SHARDS_DIR` at a new directory atomically (symlink swap or config change) once the manifest validates.
 
 ## Building the shard index (offline)
 

@@ -7,6 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -14,6 +17,13 @@ const (
 	shardMaxCodeLen = 10
 	shardMinCodeLen = 8
 )
+
+var shardLoadsTotal = promauto.NewCounter(prometheus.CounterOpts{
+	Namespace: "kart",
+	Subsystem: "promo",
+	Name:      "shard_loads_total",
+	Help:      "Shard files loaded (mmap or empty missing) on first use per shard",
+})
 
 // ShardsChecker validates promo codes by checking membership in a single
 // precomputed FNV-sharded, sorted shard file.
@@ -58,6 +68,7 @@ func (c *ShardsChecker) ensureShardLoaded(shard int) error {
 			c.shardLoaded[shard] = true
 			c.shardData[shard] = nil
 			c.shardUnmap[shard] = nil
+			shardLoadsTotal.Inc()
 			return nil
 		}
 		return err
@@ -66,6 +77,7 @@ func (c *ShardsChecker) ensureShardLoaded(shard int) error {
 	c.shardLoaded[shard] = true
 	c.shardData[shard] = raw
 	c.shardUnmap[shard] = unmap
+	shardLoadsTotal.Inc()
 	return nil
 }
 

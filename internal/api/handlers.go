@@ -16,11 +16,23 @@ import (
 type Handlers struct {
 	Catalog domain.Catalog
 	Order   *order.Service
+	// Ready returns true when the process can accept traffic (catalog + promo loaded).
+	// If nil, readiness probes always succeed.
+	Ready func() bool
 }
 
-// Health for load balancers.
+// Health is liveness: process is running.
 func (h *Handlers) Health(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// Readiness returns 200 when dependencies are satisfied, else 503.
+func (h *Handlers) Readiness(c *gin.Context) {
+	if h.Ready != nil && !h.Ready() {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not_ready"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ready"})
 }
 
 // ListProducts GET /product

@@ -16,6 +16,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/ssankrith/kart-backend/internal/promo"
 )
 
 func main() {
@@ -39,6 +41,9 @@ func main() {
 
 	if err := buildSequentialExternalSort(*dataDir, *outDir, *tmpDir, *scanLogEveryLines, *sortMemMB); err != nil {
 		log.Fatal(err)
+	}
+	if err := promo.WriteShardManifestFromDir(*outDir); err != nil {
+		log.Fatalf("manifest: %v", err)
 	}
 
 	log.Printf("promo-seq: done in %s", time.Since(start))

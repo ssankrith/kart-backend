@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/ssankrith/kart-backend/internal/catalog/memory"
@@ -71,6 +72,53 @@ func TestPlaceOrder_OK(t *testing.T) {
 	}
 	if out.CouponCode != "HAPPYHRS" {
 		t.Fatalf("coupon %+v", out)
+	}
+}
+
+func TestReadiness_OK(t *testing.T) {
+	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Category: "c", Price: 1}})
+	h := &Handlers{Catalog: cat, Order: &order.Service{Catalog: cat}, Ready: func() bool { return true }}
+	r := NewRouter(h, "apitest")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/ready", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d", w.Code)
+	}
+}
+
+func TestReadiness_NotReady(t *testing.T) {
+	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Category: "c", Price: 1}})
+	h := &Handlers{Catalog: cat, Order: &order.Service{Catalog: cat}, Ready: func() bool { return false }}
+	r := NewRouter(h, "apitest")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/ready", nil))
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status %d", w.Code)
+	}
+}
+
+func TestPlaceOrder_BodyTooLarge(t *testing.T) {
+	cat := memory.NewFromSlice([]domain.Product{{ID: "1", Name: "A", Category: "c", Price: 1}})
+	dir := couponDir(t)
+	shardsDir := filepath.Join(dir, "shards_seq")
+	if err := promo.BuildShardsFromGzipDir(dir, shardsDir); err != nil {
+		t.Fatal(err)
+	}
+	pc, err := promo.LoadShardsPromo(shardsDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pc.Close()
+	h := &Handlers{Catalog: cat, Order: &order.Service{Catalog: cat, Promo: pc}}
+	r := NewRouterWithConfig(h, "apitest", RouterConfig{MaxBodyBytes: 64})
+	body := `{"items":[{"productId":"1","quantity":1}],` + `"couponCode":"` + strings.Repeat("X", 128) + `"}`
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/order", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("api_key", "apitest")
+	r.ServeHTTP(w, req)
+	if w.Code == http.StatusOK {
+		t.Fatal("expected non-OK for oversized body")
 	}
 }
 

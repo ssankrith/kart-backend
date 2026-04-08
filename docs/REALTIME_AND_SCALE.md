@@ -30,6 +30,10 @@ There is **no** full-table scan, **no** SQL `LIKE`, and **no** cross-shard searc
 
 For a submission, documenting this distinction shows “production awareness” without needing benchmarks in the repo.
 
+## Benchmarks
+
+Reproducible **Go micro-benchmarks** for `Valid` (warm hit, cold first lookup, prelude reject, miss) and optional **HTTP load** with `hey` are documented in [BENCHMARKS.md](BENCHMARKS.md). CI runs a short `-bench` smoke step so large regressions in the promo package are visible.
+
 ## Scaling dimensions
 
 | Dimension | What happens |
